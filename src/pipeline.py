@@ -154,28 +154,28 @@ def run_pipeline():
                 "Source-to-target "
                 "reconciliation failed."
             )
+# -------------------------------------------------
+# Update watermark only after successful
+# load and reconciliation
+# -------------------------------------------------
 
-        # -------------------------------------------------
-        # Audit successful pipeline run
-        # -------------------------------------------------
+update_watermark(
+    incremental_records
+)
 
-        complete_audit(
-            run_id=run_id,
-            status="SUCCESS",
-            source_count=source_count,
-            valid_count=valid_count,
-            rejected_count=rejected_count,
-            loaded_count=loaded_count
-        )
+# -------------------------------------------------
+# Mark pipeline successful only after
+# the watermark update completes
+# -------------------------------------------------
 
-        # -------------------------------------------------
-        # Update watermark only after successful
-        # load and reconciliation
-        # -------------------------------------------------
-
-        update_watermark(
-            incremental_records
-        )
+complete_audit(
+    run_id=run_id,
+    status="SUCCESS",
+    source_count=source_count,
+    valid_count=valid_count,
+    rejected_count=rejected_count,
+    loaded_count=loaded_count
+)
 
         print(
             "\nBanking ETL pipeline "
