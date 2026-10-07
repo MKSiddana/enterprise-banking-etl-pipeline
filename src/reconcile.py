@@ -3,13 +3,18 @@ from load import get_connection
 
 def reconcile_transactions(source_records):
     """
-    Reconcile transformed source records against the target table.
+    Reconcile the current incremental source batch
+    against the corresponding records in the target.
 
     Checks:
-    1. Source vs target record count
-    2. Source vs target transaction amount
-    3. Source vs target signed amount
+    1. Incremental source vs target record count
+    2. Transaction amount totals
+    3. Signed/net amount totals
     """
+
+    if not source_records:
+        print("No records available for reconciliation.")
+        return True
 
     connection = get_connection()
 
@@ -39,32 +44,60 @@ def reconcile_transactions(source_records):
         )
 
         # -------------------------------------------------
-        # Target metrics
+        # Get IDs belonging to this incremental batch
         # -------------------------------------------------
 
-        cursor.execute("""
+        transaction_ids = [
+            record["transaction_id"]
+            for record in source_records
+        ]
+
+        placeholders = ",".join(
+            "?"
+            for _ in transaction_ids
+        )
+
+        # -------------------------------------------------
+        # Target metrics for the SAME batch only
+        # -------------------------------------------------
+
+        query = f"""
             SELECT
                 COUNT(*),
                 COALESCE(SUM(transaction_amount), 0),
                 COALESCE(SUM(signed_amount), 0)
             FROM banking_transactions
-        """)
+            WHERE transaction_id IN ({placeholders})
+        """
 
-        target_count, target_amount, target_signed_amount = (
-            cursor.fetchone()
+        cursor.execute(
+            query,
+            transaction_ids
         )
 
-        target_amount = round(target_amount, 2)
+        (
+            target_count,
+            target_amount,
+            target_signed_amount
+        ) = cursor.fetchone()
+
+        target_amount = round(
+            target_amount,
+            2
+        )
+
         target_signed_amount = round(
             target_signed_amount,
             2
         )
 
         # -------------------------------------------------
-        # Reconciliation results
+        # Reconciliation comparisons
         # -------------------------------------------------
 
-        count_match = source_count == target_count
+        count_match = (
+            source_count == target_count
+        )
 
         amount_match = (
             source_amount == target_amount
@@ -81,19 +114,28 @@ def reconcile_transactions(source_records):
             signed_amount_match
         ])
 
-        print("\n--- Reconciliation Results ---")
+        # -------------------------------------------------
+        # Display reconciliation results
+        # -------------------------------------------------
+
+        print(
+            "\n--- Incremental Reconciliation ---"
+        )
+
         print(
             f"Source count: {source_count} | "
             f"Target count: {target_count}"
         )
+
         print(
             f"Source amount: {source_amount} | "
             f"Target amount: {target_amount}"
         )
+
         print(
-            f"Source signed amount: "
+            "Source signed amount: "
             f"{source_signed_amount} | "
-            f"Target signed amount: "
+            "Target signed amount: "
             f"{target_signed_amount}"
         )
 
