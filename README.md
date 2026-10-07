@@ -400,3 +400,17 @@ Potential extensions include:
 **Madhuri Krishna Siddana**
 
 Senior Data Engineer focused on scalable ETL/ELT pipelines, cloud data platforms, distributed processing, data quality, and reliable production data systems.
+
+
+
+## 🗄️ Database Implementation
+
+This project uses **SQLite** as a lightweight local database to demonstrate the complete ETL pipeline without requiring external cloud infrastructure.
+
+The repository also includes a **SQL Server / Azure SQL-style schema** in `sql/create_tables.sql` to illustrate the database design for a potential enterprise deployment.
+
+- **Local Demonstration:** Python + SQLite
+- **Enterprise Design Reference:** Python + Azure SQL / SQL Server
+
+Azure integration is a future enhancement and is not part of the current executable pipeline.
+  
